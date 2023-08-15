@@ -1,0 +1,186 @@
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/danfojs@1.1.2/lib/bundle.min.js"></script>
+    <title>results</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .column {
+            float: left;
+            width: 50%;
+            padding: 10px;
+            height: 800px;
+        }
+
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>
+        <center> FED-SERVER </center>
+    </h1>
+
+
+    <div class="row">
+        <div class="column" style="border: 3px solid black;">
+            <h2>
+                <center>Accuracy</center>
+            </h2>
+            <div id="plot_div"></div>
+        </div>
+        <div class="column" style="border: 3px solid black;">
+            <h2>
+                <center>Details</center>
+            </h2>
+            <div id="local"></div>
+
+            <h2>Global</h2>
+            <div id="global">
+                <!-- <details>
+                    <summary>Parameter</summary>
+                    <p id="g_params"></p>
+                </details>
+                <p id="g_accuracy_list"></p>
+                <p id="g_thershold"></p> -->
+
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+    <script>
+
+        let params, accuracy_lst = [], thershold, prev_accuracy = [];
+        // const addrs1 = document.getElementById('addrs1')
+        // const params1 = document.getElementById('params1')
+        // const acc1 = document.getElementById('acc1')
+
+        // const addrs2 = document.getElementById('addrs2')
+        // const params2 = document.getElementById('params2')
+        // const acc2 = document.getElementById('acc2')
+
+
+        // const addrs3 = document.getElementById('addrs3')
+        // const params3 = document.getElementById('params3')
+        // const acc3 = document.getElementById('acc3')
+
+
+        const create = (data) => {
+            const { addrs, params, acc, accuracy_lst, thershold } = data
+            const ele = document.getElementById(`${addrs}`)
+
+            if (ele) {
+                const html = `
+                        <h2>${addrs}</h2>
+                        <details>
+                                <summary>Parameter</summary>
+                                <p>
+                                    ${params}
+                                </p>
+                        </details>
+                        <p>Accuracy: <code>${acc}</code></p>
+                        <p>Accuracies: <code>${accuracy_lst}</code></p>
+                        <p>Threshold: <code>${thershold}</code></p>
+                    `
+                ele.innerHTML = html
+            } else {
+                const html =
+                    `
+                        <div id=${addrs}>
+                            <h2>""${addrs}</h2>
+                            <details>
+                                <summary>Parameter</summary>
+                                <p>
+                                    ${params}
+                                </p>
+                            </details>
+                            <p>Accuracies: <code>${accuracy_lst}</code></p>
+                            <p>Accuracy: <code>${acc}</code></p>
+                            <p>Threshold: <code>${thershold}</code></p>
+                        </div>
+                    `
+
+                document.getElementById('local').innerHTML += html
+            }
+        }
+
+
+
+        const glbcreate = (jsonData) => {
+            // Extract the individual values from the JSON data
+            params = jsonData.params;
+            // accuracy_lst = jsonData.accuracy_lst;
+            thershold = jsonData.thershold;
+
+            console.log("ACCURACY: ", accuracy_lst);
+
+            // Update the content of the HTML elements with the extracted values
+            // const glb_wght = document.getElementById('g_params')
+            // const glb_acc = document.getElementById('g_accuracy_list')
+            // const glb_th = document.getElementById('g_thershold')
+
+            const html = `
+            <details>
+                <summary>Parameter</summary>
+                <p id="g_params">Params: ${params}</p>
+            </details>
+            <p id="g_accuracy_list">Accuracy: ${accuracy_lst}</p>
+            <p id="g_thershold">Threshold: ${thershold}</p>
+        `
+            // glb_wght.innerText = "Params: " + params;
+            // glb_acc.innerText = "Accuracy: " + accuracy_lst;
+            // glb_th.innerText = "Threshold: " + thershold;
+            document.getElementById('global').innerHTML = html
+        }
+
+
+
+
+        const msg_from_server = async () => {
+            const request = await fetch('/msg')
+            const response = await request.json()
+            // console.log(response);
+            create(response)
+
+        }
+
+        const glb_msg = async () => {
+            const request = await fetch('/glb')
+            const response = await request.json()
+            console.log(response);
+            glbcreate(response)
+            if (JSON.stringify(prev_accuracy) !== JSON.stringify(response.accuracy_lst)) {
+                accuracy_lst = response.accuracy_lst
+                prev_accuracy = response.accuracy_lst
+            }
+            console.log(accuracy_lst);
+            // console.log(Object.keys(response), JSON.parse(response))
+            const s = new dfd.Series(accuracy_lst)
+            s.plot("plot_div").line()
+        }
+
+        setInterval(() => {
+            msg_from_server();
+            glb_msg();
+        }, 1000)
+        // console.log(paramsx)
+    </script>
+    {{value}}
+</body>
+
+</html>
